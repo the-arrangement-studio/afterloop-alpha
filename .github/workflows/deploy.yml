@@ -1,0 +1,88 @@
+# deploy.yml — Download release assets and deploy to Cloudflare Pages.
+#
+# Triggers:
+#   - repository_dispatch from the plugin repo's release workflow
+#   - workflow_dispatch for manual re-deploys (e.g. after a page update)
+#
+# Required GitHub Secrets:
+#   PLUGIN_REPO_TOKEN     Fine-grained PAT with contents:read on the plugin repo
+#   CLOUDFLARE_API_TOKEN  Cloudflare API token scoped to Pages
+#   CLOUDFLARE_ACCOUNT_ID Cloudflare account identifier
+
+name: Deploy Alpha Page
+
+on:
+  repository_dispatch:
+    types: [release-published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.9-alpha.1). Leave empty to use the latest release."
+        required: false
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release info
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          # Accept tag from dispatch payload, workflow input, or fall back to latest.
+          TAG="${{ github.event.client_payload.tag || github.event.inputs.tag }}"
+
+          if [ -z "$TAG" ]; then
+            echo "No tag specified — resolving latest release"
+            gh release view \
+              --repo the-arrangement-studio/AudioOnlyPOC \
+              --json tagName,publishedAt,assets > /tmp/release.json
+          else
+            gh release view "$TAG" \
+              --repo the-arrangement-studio/AudioOnlyPOC \
+              --json tagName,publishedAt,assets > /tmp/release.json
+          fi
+
+          echo "tag=$(jq -r '.tagName' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "date=$(jq -r '.publishedAt | split("T")[0]' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "arm64_name=$(jq -r '[.assets[] | select(.name | test("arm64"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "x86_64_name=$(jq -r '[.assets[] | select(.name | test("x86_64"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "win64_name=$(jq -r '[.assets[] | select(.name | test("\\.exe$"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          TAG="${{ steps.release.outputs.tag }}"
+          mkdir -p site
+
+          gh release download "$TAG" \
+            --repo the-arrangement-studio/AudioOnlyPOC \
+            --pattern "*.dmg" --pattern "*.exe" \
+            --dir site/
+
+          echo "Downloaded assets:"
+          ls -lh site/
+
+      - name: Build page
+        run: |
+          cp index.html site/index.html
+
+          sed -i "s|__HAS_RELEASE__|true|g" site/index.html
+          sed -i "s|__RELEASE_TAG__|${{ steps.release.outputs.tag }}|g" site/index.html
+          sed -i "s|__RELEASE_DATE__|${{ steps.release.outputs.date }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_ARM64__|${{ steps.release.outputs.arm64_name }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_X86_64__|${{ steps.release.outputs.x86_64_name }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_WIN64__|${{ steps.release.outputs.win64_name }}|g" site/index.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site/ --project-name=afterloop-alpha
