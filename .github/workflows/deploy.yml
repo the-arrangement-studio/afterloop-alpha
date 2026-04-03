@@ -39,15 +39,20 @@ jobs:
 
           if [ -z "$TAG" ]; then
             echo "No tag specified — resolving latest release"
-            gh release view \
+            if ! gh release view \
               --repo the-arrangement-studio/AudioOnlyPOC \
-              --json tagName,publishedAt,assets > /tmp/release.json
+              --json tagName,publishedAt,assets > /tmp/release.json 2>/dev/null; then
+              echo "No releases found — will deploy placeholder page"
+              echo "has_release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           else
             gh release view "$TAG" \
               --repo the-arrangement-studio/AudioOnlyPOC \
               --json tagName,publishedAt,assets > /tmp/release.json
           fi
 
+          echo "has_release=true" >> "$GITHUB_OUTPUT"
           echo "tag=$(jq -r '.tagName' /tmp/release.json)" >> "$GITHUB_OUTPUT"
           echo "date=$(jq -r '.publishedAt | split("T")[0]' /tmp/release.json)" >> "$GITHUB_OUTPUT"
           echo "arm64_name=$(jq -r '[.assets[] | select(.name | test("arm64"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
@@ -55,6 +60,7 @@ jobs:
           echo "win64_name=$(jq -r '[.assets[] | select(.name | test("\\.exe$"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
 
       - name: Download release assets
+        if: steps.release.outputs.has_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
         run: |
@@ -71,9 +77,11 @@ jobs:
 
       - name: Build page
         run: |
+          mkdir -p site
           cp index.html site/index.html
 
-          sed -i "s|__HAS_RELEASE__|true|g" site/index.html
+          HAS_RELEASE="${{ steps.release.outputs.has_release }}"
+          sed -i "s|__HAS_RELEASE__|${HAS_RELEASE}|g" site/index.html
           sed -i "s|__RELEASE_TAG__|${{ steps.release.outputs.tag }}|g" site/index.html
           sed -i "s|__RELEASE_DATE__|${{ steps.release.outputs.date }}|g" site/index.html
           sed -i "s|__RELEASE_FILE_ARM64__|${{ steps.release.outputs.arm64_name }}|g" site/index.html
