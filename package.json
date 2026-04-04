@@ -1,0 +1,11 @@
+{
+  "name": "afterloop-alpha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Alpha downloads page for Afterloop, deployed to Cloudflare Pages",
+  "author": "The Arrangement Studio",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.8.1"
+  }
+}
