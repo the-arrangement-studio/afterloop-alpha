@@ -1,22 +1,10 @@
 {
   "name": "afterloop-alpha",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/the-arrangement-studio/afterloop-alpha.git"
-  },
-  "keywords": [],
-  "author": "",
+  "private": true,
+  "description": "Alpha downloads page for Afterloop, deployed to Cloudflare Pages",
+  "author": "The Arrangement Studio",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/the-arrangement-studio/afterloop-alpha/issues"
-  },
-  "homepage": "https://github.com/the-arrangement-studio/afterloop-alpha#readme",
   "devDependencies": {
     "prettier": "^3.8.1"
   }
