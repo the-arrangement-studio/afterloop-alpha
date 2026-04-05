@@ -5,6 +5,11 @@
 #
 # Alternative: Cloudflare dashboard > Workers & Pages > afterloop-alpha >
 # Deployments > rollback to any previous deploy (instant, no CI needed).
+#
+# Required GitHub Secrets (same as deploy.yml):
+#   PLUGIN_REPO_TOKEN     Fine-grained PAT with contents:read on the plugin repo
+#   CLOUDFLARE_API_TOKEN  Cloudflare API token scoped to Pages
+#   CLOUDFLARE_ACCOUNT_ID Cloudflare account identifier
 
 name: Rollback Production
 
@@ -23,6 +28,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate tag exists
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if ! gh release view "$TAG" --repo the-arrangement-studio/AudioOnlyPOC --json tagName -q .tagName > /dev/null 2>&1; then
+            echo "::error::Release tag '$TAG' not found in AudioOnlyPOC. Check for typos and verify the release exists."
+            exit 1
+          fi
 
       - name: Resolve release info
         id: release
