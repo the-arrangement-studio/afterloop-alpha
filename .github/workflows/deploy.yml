@@ -1,4 +1,4 @@
-# deploy.yml — Download release assets and deploy to Cloudflare Pages.
+# deploy.yml — Stage a preview, then deploy to production after approval.
 #
 # Triggers:
 #   - repository_dispatch from the plugin repo's release workflow
@@ -8,6 +8,9 @@
 #   PLUGIN_REPO_TOKEN     Fine-grained PAT with contents:read on the plugin repo
 #   CLOUDFLARE_API_TOKEN  Cloudflare API token scoped to Pages
 #   CLOUDFLARE_ACCOUNT_ID Cloudflare account identifier
+#
+# Required GitHub Environment:
+#   "production" with required reviewers — gates the deploy-production job
 
 name: Deploy Alpha Page
 
@@ -21,9 +24,12 @@ on:
         required: false
 
 jobs:
-  deploy:
-    name: Deploy to Cloudflare Pages
+  stage:
+    name: Stage preview
     runs-on: ubuntu-latest
+    outputs:
+      has_release: ${{ steps.release.outputs.has_release }}
+      tag: ${{ steps.release.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -39,13 +45,19 @@ jobs:
 
           if [ -z "$TAG" ]; then
             echo "No tag specified — resolving latest release"
-            if ! gh release view \
+            if ! OUTPUT=$(gh release view \
               --repo the-arrangement-studio/AudioOnlyPOC \
-              --json tagName,publishedAt,assets > /tmp/release.json 2>/dev/null; then
-              echo "No releases found — will deploy placeholder page"
-              echo "has_release=false" >> "$GITHUB_OUTPUT"
-              exit 0
+              --json tagName,publishedAt,assets 2>&1); then
+              if echo "$OUTPUT" | grep -q "release not found"; then
+                echo "No releases found — will deploy placeholder page"
+                echo "has_release=false" >> "$GITHUB_OUTPUT"
+                exit 0
+              else
+                echo "::error::Failed to fetch release info: $OUTPUT"
+                exit 1
+              fi
             fi
+            echo "$OUTPUT" > /tmp/release.json
           else
             gh release view "$TAG" \
               --repo the-arrangement-studio/AudioOnlyPOC \
@@ -88,9 +100,62 @@ jobs:
           sed -i "s|__RELEASE_FILE_X86_64__|${{ steps.release.outputs.x86_64_name }}|g" site/index.html
           sed -i "s|__RELEASE_FILE_WIN64__|${{ steps.release.outputs.win64_name }}|g" site/index.html
 
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+          retention-days: 3
+
+      - name: Deploy staging preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site/ --project-name=afterloop-alpha --branch=staging
+
+      - name: Post preview link
+        run: |
+          echo "## Staging Preview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.release.outputs.has_release }}" = "true" ]; then
+            echo "**Release:** \`${{ steps.release.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Release:** none (placeholder page)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Preview:** https://staging.afterloop-alpha.pages.dev" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Approve the **deploy-production** job to push this live." >> $GITHUB_STEP_SUMMARY
+
+  deploy-production:
+    name: Deploy to production
+    needs: stage
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site/
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site/ --project-name=afterloop-alpha
+          command: pages deploy site/ --project-name=afterloop-alpha --branch=main
+
+      - name: Post production link
+        run: |
+          echo "## Production Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          TAG="${{ needs.stage.outputs.tag }}"
+          if [ -n "$TAG" ]; then
+            echo "Release \`$TAG\` is now live at:" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Placeholder page is now live at:" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "https://afterloop-alpha.pages.dev" >> $GITHUB_STEP_SUMMARY

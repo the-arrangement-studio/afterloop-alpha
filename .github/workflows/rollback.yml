@@ -1,0 +1,95 @@
+# rollback.yml — Emergency rollback to a specific release tag.
+#
+# Deploys directly to production WITHOUT an approval gate for speed.
+# For non-emergency re-deploys, use deploy.yml instead (which stages first).
+#
+# Alternative: Cloudflare dashboard > Workers & Pages > afterloop-alpha >
+# Deployments > rollback to any previous deploy (instant, no CI needed).
+#
+# Required GitHub Secrets (same as deploy.yml):
+#   PLUGIN_REPO_TOKEN     Fine-grained PAT with contents:read on the plugin repo
+#   CLOUDFLARE_API_TOKEN  Cloudflare API token scoped to Pages
+#   CLOUDFLARE_ACCOUNT_ID Cloudflare account identifier
+
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to rollback to (e.g. v0.1.8-alpha.3)"
+        required: true
+
+jobs:
+  rollback:
+    name: Rollback to ${{ github.event.inputs.tag }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tag exists
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if ! gh release view "$TAG" --repo the-arrangement-studio/AudioOnlyPOC --json tagName -q .tagName > /dev/null 2>&1; then
+            echo "::error::Release tag '$TAG' not found in AudioOnlyPOC. Check for typos and verify the release exists."
+            exit 1
+          fi
+
+      - name: Resolve release info
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          gh release view "$TAG" \
+            --repo the-arrangement-studio/AudioOnlyPOC \
+            --json tagName,publishedAt,assets > /tmp/release.json
+
+          echo "tag=$(jq -r '.tagName' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "date=$(jq -r '.publishedAt | split("T")[0]' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "arm64_name=$(jq -r '[.assets[] | select(.name | test("arm64"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "x86_64_name=$(jq -r '[.assets[] | select(.name | test("x86_64"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+          echo "win64_name=$(jq -r '[.assets[] | select(.name | test("\\.exe$"))][0].name // ""' /tmp/release.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.PLUGIN_REPO_TOKEN }}
+        run: |
+          mkdir -p site
+
+          gh release download "${{ steps.release.outputs.tag }}" \
+            --repo the-arrangement-studio/AudioOnlyPOC \
+            --pattern "*.dmg" --pattern "*.exe" \
+            --dir site/
+
+          echo "Downloaded assets:"
+          ls -lh site/
+
+      - name: Build page
+        run: |
+          cp index.html site/index.html
+
+          sed -i "s|__HAS_RELEASE__|true|g" site/index.html
+          sed -i "s|__RELEASE_TAG__|${{ steps.release.outputs.tag }}|g" site/index.html
+          sed -i "s|__RELEASE_DATE__|${{ steps.release.outputs.date }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_ARM64__|${{ steps.release.outputs.arm64_name }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_X86_64__|${{ steps.release.outputs.x86_64_name }}|g" site/index.html
+          sed -i "s|__RELEASE_FILE_WIN64__|${{ steps.release.outputs.win64_name }}|g" site/index.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site/ --project-name=afterloop-alpha --branch=main
+
+      - name: Summary
+        run: |
+          echo "## Rollback Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Rolled back to \`${{ steps.release.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "https://afterloop-alpha.pages.dev" >> $GITHUB_STEP_SUMMARY
