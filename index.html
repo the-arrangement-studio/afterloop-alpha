@@ -1,319 +1,381 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Afterloop Alpha Downloads</title>
-  <style>
-    :root {
-      --bg: #0f0f0f;
-      --surface: #1a1a1a;
-      --border: #2a2a2a;
-      --accent: #c8a84b;
-      --text: #f0f0f0;
-      --muted: #888;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Afterloop Alpha Downloads</title>
+    <style>
+      :root {
+        --bg: #0f0f0f;
+        --surface: #1a1a1a;
+        --border: #2a2a2a;
+        --accent: #c8a84b;
+        --text: #f0f0f0;
+        --muted: #888;
+      }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2.5rem;
-      max-width: 480px;
-      width: 100%;
-    }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2.5rem;
+        max-width: 480px;
+        width: 100%;
+      }
 
-    .wordmark {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.35rem;
-    }
+      .wordmark {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.35rem;
+      }
 
-    .wordmark span { color: var(--accent); }
+      .wordmark span {
+        color: var(--accent);
+      }
 
-    .tagline {
-      color: var(--muted);
-      font-size: 0.875rem;
-      margin-bottom: 2rem;
-    }
+      .tagline {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+      }
 
-    .release-meta {
-      color: var(--muted);
-      font-size: 0.825rem;
-      margin-bottom: 1.25rem;
-    }
+      .release-meta {
+        color: var(--muted);
+        font-size: 0.825rem;
+        margin-bottom: 1.25rem;
+      }
 
-    .download-cards { display: flex; flex-direction: column; gap: 0.625rem; }
+      .download-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+      }
 
-    .download-card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.875rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
+      .download-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
 
-    .download-card.primary { border-color: var(--accent); }
+      .download-card.primary {
+        border-color: var(--accent);
+      }
 
-    .card-info { flex: 1; min-width: 0; }
+      .card-info {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .card-title {
-      font-size: 0.925rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+      .card-title {
+        font-size: 0.925rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .badge {
-      background: var(--accent);
-      color: #000;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
+      .badge {
+        background: var(--accent);
+        color: #000;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
 
-    .card-sub {
-      font-size: 0.775rem;
-      color: var(--muted);
-      margin-top: 0.25rem;
-    }
+      .card-sub {
+        font-size: 0.775rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+      }
 
-    a.dl-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      text-decoration: none;
-      padding: 0.45rem 0.875rem;
-      border-radius: 6px;
-      font-size: 0.825rem;
-      font-weight: 500;
-      white-space: nowrap;
-      transition: opacity 0.15s;
-      flex-shrink: 0;
-    }
+      a.dl-btn {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.45rem 0.875rem;
+        border-radius: 6px;
+        font-size: 0.825rem;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: opacity 0.15s;
+        flex-shrink: 0;
+      }
 
-    .download-card.primary a.dl-btn {
-      background: var(--accent);
-      color: #000;
-      border-color: var(--accent);
-    }
+      .download-card.primary a.dl-btn {
+        background: var(--accent);
+        color: #000;
+        border-color: var(--accent);
+      }
 
-    a.dl-btn:hover { opacity: 0.8; }
+      a.dl-btn:hover {
+        opacity: 0.8;
+      }
 
-    .no-release {
-      color: var(--muted);
-      font-size: 0.875rem;
-      text-align: center;
-      padding: 1rem 0;
-    }
+      .no-release {
+        color: var(--muted);
+        font-size: 0.875rem;
+        text-align: center;
+        padding: 1rem 0;
+      }
 
-    .arch-hint {
-      font-size: 0.775rem;
-      color: var(--muted);
-      margin-top: 1.25rem;
-      line-height: 1.5;
-    }
+      .arch-hint {
+        font-size: 0.775rem;
+        color: var(--muted);
+        margin-top: 1.25rem;
+        line-height: 1.5;
+      }
 
-    .arch-hint summary {
-      cursor: pointer;
-      user-select: none;
-    }
+      .arch-hint summary {
+        cursor: pointer;
+        user-select: none;
+      }
 
-    .arch-hint summary:hover { color: var(--text); }
+      .arch-hint summary:hover {
+        color: var(--text);
+      }
 
-    .arch-hint p { margin-top: 0.5rem; }
+      .arch-hint p {
+        margin-top: 0.5rem;
+      }
 
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: 1.25rem;
-      margin-bottom: 0.5rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="wordmark">After<span>loop</span></div>
-    <p class="tagline">Alpha builds — authorized testers only</p>
+      .section-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="wordmark">After<span>loop</span></div>
+      <p class="tagline">Alpha builds — authorized testers only</p>
 
-    <div id="no-release" hidden>
-      <p class="no-release">No builds available yet. Check back after the next release.</p>
+      <div id="no-release" hidden>
+        <p class="no-release">No builds available yet. Check back after the next release.</p>
+      </div>
+
+      <div id="release-content" hidden>
+        <p class="release-meta" id="release-meta"></p>
+        <div class="download-cards" id="download-cards"></div>
+
+        <details class="arch-hint">
+          <summary>Not sure which version to download?</summary>
+          <p>
+            <strong>macOS:</strong> Choose <strong>Apple Silicon (ARM64)</strong> for M1, M2, M3, or
+            M4 Macs (2020 or newer). Choose <strong>Intel (x86_64)</strong> for older Macs with an
+            Intel Core processor.
+          </p>
+          <p>
+            To check: Apple menu &rarr; About This Mac. &ldquo;Apple M&hellip;&rdquo; = ARM64.
+            &ldquo;Intel Core&hellip;&rdquo; = x86_64.
+          </p>
+          <p>
+            <strong>Windows:</strong> Download the Windows installer. It supports all modern Intel
+            and AMD processors (x64).
+          </p>
+        </details>
+      </div>
     </div>
 
-    <div id="release-content" hidden>
-      <p class="release-meta" id="release-meta"></p>
-      <div class="download-cards" id="download-cards"></div>
+    <script>
+      // Release metadata — substituted at deploy time by the CI workflow.
+      const HAS_RELEASE = __HAS_RELEASE__;
+      const RELEASE_TAG = '__RELEASE_TAG__';
+      const RELEASE_DATE = '__RELEASE_DATE__';
+      const RELEASE_FILE_ARM64 = '__RELEASE_FILE_ARM64__';
+      const RELEASE_FILE_X86_64 = '__RELEASE_FILE_X86_64__';
+      const RELEASE_FILE_WIN64 = '__RELEASE_FILE_WIN64__';
 
-      <details class="arch-hint">
-        <summary>Not sure which version to download?</summary>
-        <p>
-          <strong>macOS:</strong> Choose <strong>Apple Silicon (ARM64)</strong> for M1, M2, M3,
-          or M4 Macs (2020 or newer). Choose <strong>Intel (x86_64)</strong> for older Macs with
-          an Intel Core processor.
-        </p>
-        <p>
-          To check: Apple menu &rarr; About This Mac. &ldquo;Apple M&hellip;&rdquo; = ARM64.
-          &ldquo;Intel Core&hellip;&rdquo; = x86_64.
-        </p>
-        <p>
-          <strong>Windows:</strong> Download the Windows installer. It supports all modern
-          Intel and AMD processors (x64).
-        </p>
-      </details>
-    </div>
-  </div>
+      // ── Platform detection ────────────────────────────────────────────────────
 
-  <script>
-    // Release metadata — substituted at deploy time by the CI workflow.
-    const HAS_RELEASE = __HAS_RELEASE__;
-    const RELEASE_TAG = '__RELEASE_TAG__';
-    const RELEASE_DATE = '__RELEASE_DATE__';
-    const RELEASE_FILE_ARM64 = '__RELEASE_FILE_ARM64__';
-    const RELEASE_FILE_X86_64 = '__RELEASE_FILE_X86_64__';
-    const RELEASE_FILE_WIN64 = '__RELEASE_FILE_WIN64__';
+      async function detectPlatform() {
+        const ua = navigator.userAgent;
+        if (/Windows/i.test(ua)) return 'windows';
 
-    // ── Platform detection ────────────────────────────────────────────────────
+        // macOS architecture detection via userAgentData (Chromium-based browsers).
+        // Safari lacks userAgentData — default to arm64 (most common new Mac).
+        try {
+          if (navigator.userAgentData) {
+            const data = await navigator.userAgentData.getHighEntropyValues([
+              'architecture',
+              'platform',
+            ]);
+            if (data.platform === 'macOS') {
+              return data.architecture === 'arm' ? 'mac-arm64' : 'mac-x86_64';
+            }
+          }
+        } catch (err) {
+          console.debug('detectPlatform: userAgentData unavailable', err.message);
+        }
 
-    async function detectPlatform() {
-      const ua = navigator.userAgent;
-      if (/Windows/i.test(ua)) return 'windows';
+        if (/Mac/i.test(ua)) return 'mac-unknown';
+        return 'unknown';
+      }
 
-      // macOS architecture detection via userAgentData (Chromium-based browsers).
-      // Safari lacks userAgentData — default to arm64 (most common new Mac).
-      try {
-        if (navigator.userAgentData) {
-          const data = await navigator.userAgentData.getHighEntropyValues(
-            ['architecture', 'platform']
-          );
-          if (data.platform === 'macOS') {
-            return data.architecture === 'arm' ? 'mac-arm64' : 'mac-x86_64';
+      // ── Render downloads ──────────────────────────────────────────────────────
+
+      function makeCard(label, sub, file, primary) {
+        const card = document.createElement('div');
+        card.className = 'download-card' + (primary ? ' primary' : '');
+
+        const info = document.createElement('div');
+        info.className = 'card-info';
+
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = label;
+        if (primary) {
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.textContent = 'Recommended';
+          title.appendChild(badge);
+        }
+
+        const cardSub = document.createElement('div');
+        cardSub.className = 'card-sub';
+        cardSub.textContent = sub;
+
+        info.appendChild(title);
+        info.appendChild(cardSub);
+
+        const link = document.createElement('a');
+        link.className = 'dl-btn';
+        link.setAttribute('href', './' + file);
+        link.textContent = 'Download';
+
+        card.appendChild(info);
+        card.appendChild(link);
+        return card;
+      }
+
+      async function showDownloads() {
+        if (!HAS_RELEASE) {
+          document.getElementById('no-release').hidden = false;
+          return;
+        }
+
+        document.getElementById('release-content').hidden = false;
+
+        const date = new Date(RELEASE_DATE + 'T00:00:00').toLocaleDateString(undefined, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+        document.getElementById('release-meta').textContent =
+          `Latest: ${RELEASE_TAG} \u00b7 Released ${date}`;
+
+        const platform = await detectPlatform();
+        const container = document.getElementById('download-cards');
+
+        // Define all available downloads.
+        const macCards = [];
+        const winCards = [];
+
+        if (platform === 'mac-x86_64') {
+          if (RELEASE_FILE_X86_64)
+            macCards.push({
+              label: 'macOS — Intel (x86_64)',
+              sub: 'Intel Core — pre-2020',
+              file: RELEASE_FILE_X86_64,
+              primary: true,
+            });
+          if (RELEASE_FILE_ARM64)
+            macCards.push({
+              label: 'macOS — Apple Silicon (ARM64)',
+              sub: 'M1, M2, M3, M4 — 2020 or newer',
+              file: RELEASE_FILE_ARM64,
+              primary: false,
+            });
+        } else {
+          if (RELEASE_FILE_ARM64)
+            macCards.push({
+              label: 'macOS — Apple Silicon (ARM64)',
+              sub: 'M1, M2, M3, M4 — 2020 or newer',
+              file: RELEASE_FILE_ARM64,
+              primary: true,
+            });
+          if (RELEASE_FILE_X86_64)
+            macCards.push({
+              label: 'macOS — Intel (x86_64)',
+              sub: 'Intel Core — pre-2020',
+              file: RELEASE_FILE_X86_64,
+              primary: false,
+            });
+        }
+
+        if (RELEASE_FILE_WIN64)
+          winCards.push({
+            label: 'Windows (x64)',
+            sub: 'Intel and AMD — Windows 10+',
+            file: RELEASE_FILE_WIN64,
+            primary: platform === 'windows',
+          });
+
+        // On Windows, show Windows first. Otherwise macOS first.
+        const showWindowsFirst = platform === 'windows';
+
+        // If Windows is primary, demote macOS cards from primary.
+        if (showWindowsFirst && macCards.length) {
+          macCards.forEach((c) => (c.primary = false));
+        }
+
+        const groups = showWindowsFirst
+          ? [
+              { label: 'Windows', cards: winCards },
+              { label: 'macOS', cards: macCards },
+            ]
+          : [
+              { label: 'macOS', cards: macCards },
+              { label: 'Windows', cards: winCards },
+            ];
+
+        for (const group of groups) {
+          if (!group.cards.length) continue;
+          if (macCards.length && winCards.length) {
+            const sectionLabel = document.createElement('div');
+            sectionLabel.className = 'section-label';
+            sectionLabel.textContent = group.label;
+            container.appendChild(sectionLabel);
+          }
+          for (const c of group.cards) {
+            container.appendChild(makeCard(c.label, c.sub, c.file, c.primary));
           }
         }
-      } catch (err) {
-        console.debug('detectPlatform: userAgentData unavailable', err.message);
       }
 
-      if (/Mac/i.test(ua)) return 'mac-unknown';
-      return 'unknown';
-    }
-
-    // ── Render downloads ──────────────────────────────────────────────────────
-
-    function makeCard(label, sub, file, primary) {
-      const card = document.createElement('div');
-      card.className = 'download-card' + (primary ? ' primary' : '');
-
-      const info = document.createElement('div');
-      info.className = 'card-info';
-
-      const title = document.createElement('div');
-      title.className = 'card-title';
-      title.textContent = label;
-      if (primary) {
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = 'Recommended';
-        title.appendChild(badge);
-      }
-
-      const cardSub = document.createElement('div');
-      cardSub.className = 'card-sub';
-      cardSub.textContent = sub;
-
-      info.appendChild(title);
-      info.appendChild(cardSub);
-
-      const link = document.createElement('a');
-      link.className = 'dl-btn';
-      link.setAttribute('href', './' + file);
-      link.textContent = 'Download';
-
-      card.appendChild(info);
-      card.appendChild(link);
-      return card;
-    }
-
-    async function showDownloads() {
-      if (!HAS_RELEASE) {
-        document.getElementById('no-release').hidden = false;
-        return;
-      }
-
-      document.getElementById('release-content').hidden = false;
-
-      const date = new Date(RELEASE_DATE + 'T00:00:00').toLocaleDateString(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric',
-      });
-      document.getElementById('release-meta').textContent =
-        `Latest: ${RELEASE_TAG} \u00b7 Released ${date}`;
-
-      const platform = await detectPlatform();
-      const container = document.getElementById('download-cards');
-
-      // Define all available downloads.
-      const macCards = [];
-      const winCards = [];
-
-      if (platform === 'mac-x86_64') {
-        if (RELEASE_FILE_X86_64) macCards.push({ label: 'macOS — Intel (x86_64)', sub: 'Intel Core — pre-2020', file: RELEASE_FILE_X86_64, primary: true });
-        if (RELEASE_FILE_ARM64) macCards.push({ label: 'macOS — Apple Silicon (ARM64)', sub: 'M1, M2, M3, M4 — 2020 or newer', file: RELEASE_FILE_ARM64, primary: false });
-      } else {
-        if (RELEASE_FILE_ARM64) macCards.push({ label: 'macOS — Apple Silicon (ARM64)', sub: 'M1, M2, M3, M4 — 2020 or newer', file: RELEASE_FILE_ARM64, primary: true });
-        if (RELEASE_FILE_X86_64) macCards.push({ label: 'macOS — Intel (x86_64)', sub: 'Intel Core — pre-2020', file: RELEASE_FILE_X86_64, primary: false });
-      }
-
-      if (RELEASE_FILE_WIN64) winCards.push({ label: 'Windows (x64)', sub: 'Intel and AMD — Windows 10+', file: RELEASE_FILE_WIN64, primary: platform === 'windows' });
-
-      // On Windows, show Windows first. Otherwise macOS first.
-      const showWindowsFirst = platform === 'windows';
-
-      // If Windows is primary, demote macOS cards from primary.
-      if (showWindowsFirst && macCards.length) {
-        macCards.forEach(c => c.primary = false);
-      }
-
-      const groups = showWindowsFirst
-        ? [{ label: 'Windows', cards: winCards }, { label: 'macOS', cards: macCards }]
-        : [{ label: 'macOS', cards: macCards }, { label: 'Windows', cards: winCards }];
-
-      for (const group of groups) {
-        if (!group.cards.length) continue;
-        if (macCards.length && winCards.length) {
-          const sectionLabel = document.createElement('div');
-          sectionLabel.className = 'section-label';
-          sectionLabel.textContent = group.label;
-          container.appendChild(sectionLabel);
-        }
-        for (const c of group.cards) {
-          container.appendChild(makeCard(c.label, c.sub, c.file, c.primary));
-        }
-      }
-    }
-
-    showDownloads();
-  </script>
-</body>
+      showDownloads();
+    </script>
+  </body>
 </html>
